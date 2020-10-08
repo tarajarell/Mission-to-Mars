@@ -3,10 +3,30 @@
 from splinter import Browser
 from bs4 import BeautifulSoup as soup
 import pandas as pd
+import datetime as dt
+
+def scrape_all():
+   # Initiate headless driver for deployment
+   browser = Browser("chrome", executable_path="chromedriver", headless=True)
+
+   news_title, news_paragraph = mars_news(browser)
+
+   # Run all scraping functions and store results in dictionary
+   data = {
+      "news_title": news_title,
+      "news_paragraph": news_paragraph,
+      "featured_image": featured_image(browser),
+      "facts": mars_facts(),
+      "last_modified": dt.datetime.now()
+    }  
+
+    # Stop webdriver and return data
+    browser.quit()
+    return data
 
 # Set the executable path and initialize the chrome browser in splinter
-executable_path = {'executable_path': '/usr/local/bin/chromedriver'}
-browser = Browser('chrome', **executable_path)
+# executable_path = {'executable_path': '/usr/local/bin/chromedriver'}
+# browser = Browser('chrome', **executable_path)
 
 def mars_news(browser):
 
@@ -48,7 +68,7 @@ def featured_image(browser):
 
     # Find the more info button and click that
     browser.is_element_present_by_text('more info', wait_time=1)
-    more_info_elem = browser.find_link_by_partial_text('more info')
+    more_info_elem = browser.links.find_by_partial_text('more info')
     more_info_elem.click()
 
     # Parse the resulting html with soup
@@ -85,6 +105,9 @@ def mars_facts():
     df.set_index('Description', inplace=True)
 
     # Convert dataframe into HTML format, add bootstrap
-    return df.to_html()
+    return df.to_html(classes="table table-striped")
 
-browser.quit()
+if __name__ == "__main__":
+
+    # If running as script, print scraped data
+    print(scrape_all())
